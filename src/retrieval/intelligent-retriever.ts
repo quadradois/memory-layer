@@ -1,5 +1,9 @@
 import { ProjectGraph, SemanticIndex, ArchMemory, RetrievalQuery, RetrievalResult, ScoredItem } from "../core/types";
 
+// Fator aplicado ao score de arquivos de teste em intenções de implementação.
+// Mantém o teste visível, mas abaixo do fonte equivalente.
+const TEST_DERANK_FACTOR = 0.5;
+
 export class IntelligentRetriever {
   retrieve(query: RetrievalQuery, graph: ProjectGraph, indices: SemanticIndex[], memory: ArchMemory): RetrievalResult {
     const relevantFiles = this.findRelevantFiles(query, indices);
@@ -89,6 +93,14 @@ export class IntelligentRetriever {
           score += 0.3;
           reasons.push(`nome corresponde à entidade "${entity}"`);
         }
+      }
+
+      // De-rank leve de arquivos de teste quando a intenção é implementar uma
+      // feature: nesse caso o que importa é o fonte, não o .spec. O teste não
+      // é removido — só passa a rankear abaixo do fonte equivalente.
+      if (query.intent === "feature" && this.isTestFile(idx)) {
+        score *= TEST_DERANK_FACTOR;
+        reasons.push("arquivo de teste (de-rank p/ intenção 'feature')");
       }
 
       score = Math.min(score, 1);
@@ -227,6 +239,10 @@ export class IntelligentRetriever {
     }
 
     return ctx.join("\n");
+  }
+
+  private isTestFile(idx: SemanticIndex): boolean {
+    return idx.tags.includes("test") || idx.intent === "validation" || idx.domain === "testing";
   }
 
   private calculateRelevance(text: string, queryWords: string[]): number {

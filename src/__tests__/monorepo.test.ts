@@ -4,7 +4,7 @@ import { ProjectScanner } from "../scanner/project-scanner";
 import { DependencyGraph } from "../scanner/dependency-graph";
 import { SemanticIndexer } from "../indexer/semantic-indexer";
 import { IntelligentRetriever } from "../retrieval/intelligent-retriever";
-import { MemoryLayerConfig, DEFAULT_CONFIG, ProjectGraph, RetrievalQuery } from "../core/types";
+import { MemoryLayerConfig, DEFAULT_CONFIG, ProjectGraph, RetrievalQuery, SemanticIndex, ArchMemory } from "../core/types";
 
 const FIXTURE = path.resolve(__dirname, "fixtures", "monorepo");
 
@@ -167,5 +167,48 @@ describe("Layer 4 — Retrieval (3 cenarios reais)", () => {
     const bairroRank = topFiles.findIndex(f => f.includes("bairro.service.ts"));
     expect(bairroRank).toBeGreaterThanOrEqual(0);
     expect(bairroRank).toBeLessThan(3);
+  });
+});
+
+describe("Layer 4 — De-rank de arquivos de teste (intent=feature)", () => {
+  const emptyMemory: ArchMemory = {
+    stack: {}, decisions: [], patterns: [], conventions: {}, rules: [], antiPatterns: [],
+  };
+
+  function mkIndex(file: string, tags: string[], intent: string): SemanticIndex {
+    return {
+      file, purpose: "", summary: "", intent, responsibility: "",
+      domain: "payment", dependsOn: [], usedBy: [], tags,
+    };
+  }
+
+  // Fonte e teste casam igualmente bem com a query "asaas".
+  const indices: SemanticIndex[] = [
+    mkIndex("src/asaas.spec.ts", ["payment", "test"], "validation"),
+    mkIndex("src/asaas.service.ts", ["payment", "service"], "implementation"),
+  ];
+  const graph: ProjectGraph = { files: new Map(), edges: [], entryPoints: [], modules: [] };
+
+  it("intent=feature: o fonte rankeia ACIMA do teste, mas o teste continua presente", () => {
+    const retriever = new IntelligentRetriever();
+    const query: RetrievalQuery = { raw: "asaas", intent: "feature", entities: ["asaas"] };
+    const files = retriever.retrieve(query, graph, indices, emptyMemory).relevantFiles.map(f => f.item);
+    const src = files.findIndex(f => f.includes("asaas.service.ts"));
+    const test = files.findIndex(f => f.includes("asaas.spec.ts"));
+    expect(src).toBeGreaterThanOrEqual(0);
+    expect(test).toBeGreaterThanOrEqual(0); // não foi removido
+    expect(src).toBeLessThan(test);         // fonte vem antes do teste
+  });
+
+  it("intent=question: sem de-rank (teste pode rankear normalmente)", () => {
+    const retriever = new IntelligentRetriever();
+    const query: RetrievalQuery = { raw: "asaas", intent: "question", entities: ["asaas"] };
+    const scoredTest = retriever
+      .retrieve(query, graph, indices, emptyMemory)
+      .relevantFiles.find(f => f.item.includes("asaas.spec.ts"));
+    const scoredTestFeature = retriever
+      .retrieve({ raw: "asaas", intent: "feature", entities: ["asaas"] }, graph, indices, emptyMemory)
+      .relevantFiles.find(f => f.item.includes("asaas.spec.ts"));
+    expect(scoredTest!.score).toBeGreaterThan(scoredTestFeature!.score);
   });
 });
