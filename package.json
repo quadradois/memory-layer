@@ -1,0 +1,39 @@
+{
+  "name": "memory-layer",
+  "version": "0.1.0",
+  "description": "Memory Layer for AI Development - Contextual layer between LLM and project, exposed as a CLI and an MCP server",
+  "main": "dist/cli.js",
+  "bin": {
+    "ml": "dist/cli.js",
+    "memory-layer-mcp": "dist/mcp-server.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "mcp": "node dist/mcp-server.js",
+    "test:mcp": "node mcp-smoke-test.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "claude-code",
+    "context",
+    "memory",
+    "architecture"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  }
+}

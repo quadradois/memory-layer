@@ -1,0 +1,1 @@
+{"frontend":{"framework":"React","styling":"Tailwind","forbidden":["Material UI","Chakra UI"]},"backend":{"architecture":"modular","framework":"NestJS"}}
