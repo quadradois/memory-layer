@@ -28,6 +28,7 @@ export class MemoryEngine {
   async scan(): Promise<ProjectGraph> {
     const files = await this.scanner.scan(this.config.projectRoot);
     this.dependencyGraph = new DependencyGraph();
+    this.dependencyGraph.setRootDir(this.config.projectRoot);
     for (const file of files) {
       this.dependencyGraph.addFile(file);
     }

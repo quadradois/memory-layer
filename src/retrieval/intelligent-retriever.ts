@@ -78,6 +78,9 @@ export class IntelligentRetriever {
       const tagScore = this.calculateTagScore(idx.tags, queryWords);
       if (tagScore > 0) { score += tagScore * 0.15; reasons.push(`tags: ${idx.tags.join(", ")}`); }
 
+      const fileNameScore = this.calculateFilenameScore(idx.file, queryWords);
+      if (fileNameScore > 0) { score += fileNameScore; reasons.push(`nome do arquivo corresponde à consulta`); }
+
       const depScore = this.calculateDependencyScore(idx, queryWords);
       if (depScore > 0) { score += depScore * 0.1; }
 
@@ -244,6 +247,16 @@ export class IntelligentRetriever {
       }
     }
     return score;
+  }
+
+  private calculateFilenameScore(filePath: string, queryWords: string[]): number {
+    const fileName = filePath.split("/").pop()?.toLowerCase() || filePath.toLowerCase();
+    let score = 0;
+    for (const word of queryWords) {
+      if (word.length <= 2) continue;
+      if (fileName.includes(word)) score += 0.35;
+    }
+    return Math.min(score, 0.7);
   }
 
   private calculateDependencyScore(idx: SemanticIndex, queryWords: string[]): number {

@@ -1,0 +1,5 @@
+{
+  "name": "rancho-delivery",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"]
+}

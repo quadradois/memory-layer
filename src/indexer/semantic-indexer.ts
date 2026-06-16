@@ -1,4 +1,5 @@
 import { ProjectGraph, SemanticIndex, FileType } from "../core/types";
+import { inferDomain } from "../core/domains";
 
 export class SemanticIndexer {
   index(graph: ProjectGraph): SemanticIndex[] {
@@ -40,41 +41,7 @@ export class SemanticIndexer {
   }
 
   private inferDomain(filePath: string, file: any): string {
-    const parts = filePath.toLowerCase().split("/");
-    const domainKeywords: Record<string, string> = {
-      auth: "authentication",
-      user: "user-management",
-      payment: "payment",
-      order: "order",
-      product: "catalog",
-      notification: "notification",
-      email: "communication",
-      api: "api",
-      db: "database",
-      config: "configuration",
-      middleware: "middleware",
-      shared: "shared",
-      ui: "ui",
-      component: "ui",
-      page: "ui",
-      hook: "hooks",
-      util: "utilities",
-      helper: "utilities",
-      lib: "library",
-      test: "testing",
-      service: "service",
-      controller: "controller",
-      module: "module",
-      dto: "data-transfer",
-      entity: "entity",
-      model: "model",
-      schema: "schema",
-    };
-
-    for (const part of parts) {
-      if (domainKeywords[part]) return domainKeywords[part];
-    }
-    return "unknown";
+    return inferDomain(filePath);
   }
 
   private inferPurpose(file: any, domain: string): string {

@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "@rancho-delivery/shared": ["../../packages/shared/src"]
+    }
+  }
+}
